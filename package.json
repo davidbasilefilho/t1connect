@@ -1,0 +1,13 @@
+{
+  "name": "t1-connect-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=24.15.0 <25" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "demo": "node lab/demo.mjs",
+    "bench": "node lab/benchmark.mjs"
+  }
+}
