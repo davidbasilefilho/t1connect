@@ -1,0 +1,11 @@
+# Benchmark contract
+
+Fixed scenario: T1 loopback v1, one viewer, four tasks per host, three fresh hosts per variant. Node 24 and OpenSSL 3, Linux x64, no real third-party network. Each task appends a start, 32 progress events and a completion, polling every 15 ms. At cursor 5, a raw TCP loopback proxy drops established sessions and withholds new transport for 160 ms. The viewer sees a timed-out request, reopens its local database, and resumes. Retrying the owner's start ID during loss returns the existing task.
+
+Pairing latency starts when the owner submits approval and ends with the device's first authorized read (an expected 404 before task start), excluding human time, PKI and daemon startup. Online event latency is host timestamp to committed client batch, excluding the first recovered backlog. Reconnection runs from synthetic link restoration to the first committed backlog. Revocation latency runs from the owner's acknowledged revocation to rejection of the next event read. Quantiles are nearest-rank. Small samples make per-run pairing and reconnect p95 equal to max (four samples) and revocation a spot check (one). CPU is the child host user + system CPU delta. Peak RSS and final RSS are host only. No energy, mobile, bandwidth or human usability claim follows.
+
+Baseline commit: `49bb318`. [Raw fresh TLS baseline](evidence/fresh-tls.ndjson), Node v24.22.3. Median host CPU 677.19 ms over four tasks, range 650.39–731.20 ms. Peak RSS 55,732–56,728 KiB. Online event p95 20–21 ms, reconnect p95 10.64–14.65 ms. All 12 tasks paired and recovered, 408 total events, three revocations enforced.
+
+## Acceptance before changing the transport
+
+Required every run: 100% approval and reconnect, precisely one start/finish and 34 sequential events per task, and no post-revocation request authorized, including on an existing connection. Baseline lab targets: online event p95 ≤ 30 ms, reconnect p95 ≤ 100 ms after restoration, pairing p95 ≤ 50 ms and revocation next-request ≤ 50 ms. Candidate must reduce median host CPU by at least 20%, not add more than 5 ms to online event p95 or 8 MiB to peak host RSS, and pass the negative tests. If inconclusive, retain the baseline. This is a local optimization gate, not a production SLO.
