@@ -4,7 +4,13 @@
 | --- | --- |
 | T3 Code | [Latest stable v0.1.12](https://github.com/pingdotgg/t3code/releases/tag/v0.1.12), published 2026-11-25 07:36 UTC, source `ca81b7b97a1c4b91e5ac25768d0f6629f37732fd`. Main observed at [e56b8d9](https://github.com/pingdotgg/t3code/commit/e56b8d9cfcc868d8fc9a1c7808fe74f4842c7675). Main and release are not interchangeable. |
 | T1OS | [ba0c04c, main](https://github.com/davidbasilefilho/t1os/tree/ba0c04cec2891117a4cd3027c85f541a691a38bf). Latest release endpoint returned 404. Its overlay pins T3 Code **v0.1.10**. |
-| HolyAgent | [56d8b87, holyagent-0.3.4](https://github.com/davidbasilefilho/holyagent/tree/56d8b8758b001c4eb0599ee9276aa02607310795). Official supported workflow is T3 Code/Pi, with Claude Code plugin documented separately. It needs Bun and a supported host. |
+| HolyAgent | [56d8b87, holyagent-0.3.4](https://github.com/davidbasilefilho/holyagent/tree/56d8b8758b001c4eb0599ee9276aa02607310795). The pinned release documents T3 Code/Pi as its only supported user-facing workflow. |
+
+The isolated probe used the pinned public HolyAgent launcher and Bun 1.4.5 with no
+inherited credentials. The official setup dry run exited 1, reporting that T3
+settings were not initialized and Pi was absent from PATH. The legacy wrapper's
+dry run could only propose Claude configuration, which was not written. No runtime
+or editor was installed and the active harness was unchanged.
 
 ## What T3 Connect actually does
 
