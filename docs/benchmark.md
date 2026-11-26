@@ -43,3 +43,39 @@ reuse test explicitly verifies that a revoked device is denied on the already
 established TLS connection. Keep the corrected candidate. Reproduce with
 npm run bench -- compare 3 4. The harness can still select baseline, and transport
 can revert to a fresh TLS request by setting keepAlive false. No schema change.
+
+## Daemon restart guardrail
+
+The follow-up hypothesis is that process termination before the task completes
+does not alter the committed projection, require pairing again, or restore revoked
+access. Benchmark T1 daemon restart v1 compares graceful SIGTERM with abrupt
+SIGKILL, alternating order and starting with fresh PKI and state in each trial.
+After event 5, terminate only the daemon child started by the fixture. Rebind the
+same loopback port with the same host identity and a new owner runtime directory,
+keeping SQLite state and the viewer cursor. This deliberately leaves deployment,
+service-manager recovery and real networking out of the measurement.
+
+Acceptance requires that every trial preserve the committed prefix, complete
+exactly one 34-event sequence, deny the pre-restart session, and deny a revoked
+device after a second restart. On this local fixture the interruption-to-resume
+p95 must be at most 500 ms, and the abrupt p95 must be within 100 ms of the
+graceful baseline. Times use the harness's monotonic clock. Interruption begins
+immediately before signaling the child, and resume ends at the first newly
+committed viewer event.
+
+[Raw restart comparison](evidence/daemon-restart.ndjson), Node v24.22.3 on Linux x64.
+All six trials per mode passed. Because n=6, the nearest-rank p95 is the maximum
+observed sample.
+
+| Local metric | Graceful (p50 / p95) | Abrupt (p50 / p95) |
+| --- | ---: | ---: |
+| Interruption to daemon ready | 89.31 / 102.89 ms | 71.91 / 101.65 ms |
+| Daemon ready to first newly committed event | 17.10 / 18.49 ms | 16.81 / 19.57 ms |
+| Interruption to first newly committed event | 107.67 / 119.99 ms | 87.23 / 120.57 ms |
+
+The abrupt case met the gate. Across 12 trials, all 408 events were recorded and
+all 12 revoked devices stayed denied after a second restart. This validates the
+existing protocol and storage behavior under process failure without changing the
+runtime. It does not test systemd or T1OS guest restart policy, power loss,
+filesystem faults, mobile transport, or the durability of external actions.
+Reproduce with npm run bench:restart -- 6.

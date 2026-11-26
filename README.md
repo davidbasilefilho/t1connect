@@ -2,6 +2,8 @@
 
 Opt-in, self-hosted access to tasks on computers you own. Independent of T3 Tools and T1OS.
 
+Project repository: [davidbasilefilho/t1connect](https://github.com/davidbasilefilho/t1connect).
+
 Experimental. See [upstream research](docs/upstream.md) and the [private-first design](docs/design.md).
 
 Licensed under Apache-2.0.
@@ -15,6 +17,7 @@ There are no npm dependencies. OpenSSL is used only by the synthetic fixture.
 npm test
 npm run demo
 npm run bench -- compare 3 4
+npm run bench:restart -- 6
 ```
 
 The lab starts a child daemon on a random loopback port, creates temporary test
