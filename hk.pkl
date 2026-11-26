@@ -1,0 +1,17 @@
+amends "package://github.com/jdx/hk/releases/download/v2.14.0/hk@2.14.0#/Config.pkl"
+
+hooks {
+  ["pre-commit"] {
+    fix = false
+    stage = false
+    steps {
+      ["check"] { check = "npm run check" }
+    }
+  }
+  ["pre-push"] {
+    fix = false
+    steps {
+      ["verify"] { check = "npm run verify" }
+    }
+  }
+}

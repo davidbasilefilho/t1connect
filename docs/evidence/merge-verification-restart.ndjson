@@ -1,0 +1,15 @@
+{"scenario":"t1-daemon-restart-v1","node":"v24.22.3","platform":"linux/x64","pairs":6,"unit":"ms"}
+{"pair":1,"mode":"graceful","events":34,"interruptionToReadyMs":95.45,"readyToResumeMs":16.94,"interruptionToResumeMs":112.38}
+{"pair":1,"mode":"abrupt","events":34,"interruptionToReadyMs":82.83,"readyToResumeMs":18.79,"interruptionToResumeMs":101.62}
+{"pair":2,"mode":"abrupt","events":34,"interruptionToReadyMs":79.35,"readyToResumeMs":18.43,"interruptionToResumeMs":97.77}
+{"pair":2,"mode":"graceful","events":34,"interruptionToReadyMs":74.93,"readyToResumeMs":21.25,"interruptionToResumeMs":96.18}
+{"pair":3,"mode":"graceful","events":34,"interruptionToReadyMs":86.07,"readyToResumeMs":20.94,"interruptionToResumeMs":107}
+{"pair":3,"mode":"abrupt","events":34,"interruptionToReadyMs":77.38,"readyToResumeMs":17.17,"interruptionToResumeMs":94.54}
+{"pair":4,"mode":"abrupt","events":34,"interruptionToReadyMs":77.97,"readyToResumeMs":17.03,"interruptionToResumeMs":95}
+{"pair":4,"mode":"graceful","events":34,"interruptionToReadyMs":81.11,"readyToResumeMs":17.13,"interruptionToResumeMs":98.23}
+{"pair":5,"mode":"graceful","events":34,"interruptionToReadyMs":92.01,"readyToResumeMs":20.26,"interruptionToResumeMs":112.27}
+{"pair":5,"mode":"abrupt","events":34,"interruptionToReadyMs":87.47,"readyToResumeMs":23.56,"interruptionToResumeMs":111.03}
+{"pair":6,"mode":"abrupt","events":34,"interruptionToReadyMs":81.66,"readyToResumeMs":15.24,"interruptionToResumeMs":96.9}
+{"pair":6,"mode":"graceful","events":34,"interruptionToReadyMs":89.29,"readyToResumeMs":19.33,"interruptionToResumeMs":108.62}
+{"summary":"graceful","successful":6,"events":204,"interruptionToReadyMs":{"p50":86.07,"p95":95.45},"readyToResumeMs":{"p50":19.33,"p95":21.25},"interruptionToResumeMs":{"p50":107,"p95":112.38}}
+{"summary":"abrupt","successful":6,"events":204,"interruptionToReadyMs":{"p50":79.35,"p95":87.47},"readyToResumeMs":{"p50":17.17,"p95":23.56},"interruptionToResumeMs":{"p50":96.9,"p95":111.03}}
