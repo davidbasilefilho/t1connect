@@ -35,7 +35,7 @@ PR #1 does not use Clerk, call a relay, or expose an off-host service.
 | Option | Fit now | Cost / revisit trigger |
 | --- | --- | --- |
 | Reuse upstream direct T3 pairing and clients | Useful compatibility experiment, but not an independent minimal service | Requires T3 daemon and scoped pairing. Test against both pinned T1OS and current stable before committing to an adapter. |
-| Adapt the upstream relay and clients | Mature route choice, account discovery and mobile UX | Replaces/operates multiple infrastructure dependencies and inherits the broader host contract. Reconsider only with measured need, separate client builds and review. |
+| Preserve upstream clients with a compatible relay and a build/profile change | Retains mature route choice, account discovery and mobile UX | Requires a versioned compatibility boundary and platform builds. Start with upstream source unchanged and use only a measured, minimal integration change when configuration is insufficient. |
 | Implement a small private protocol | **Chosen for M1.** Loopback TLS, local approval, read-only task events and durable cursors | No claim of T3 wire compatibility, WAN reachability, browser or mobile support. Keep the adapter narrow to avoid rebuilding the T3 editor or agent runtime. |
 
 ## Source and license inventory
