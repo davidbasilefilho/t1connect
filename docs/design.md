@@ -10,6 +10,15 @@ M1 is a disposable, Linux-first lab. An owner on the desktop terminal approves o
 - Host task IDs are idempotency keys. Each state transition and event write is one SQLite transaction. On restart the worker advances persisted state, never replays an external side effect. The client commits a validated contiguous batch and its cursor in one SQLite transaction before presenting it. A transport retry only reads or refreshes a session. Replay storage is deliberately bounded and does not silently truncate.
 - All request and fixture data is synthetic. No credentials, payloads, authorization headers, or task events enter daemon logs. No telemetry, host discovery, filesystem browsing, reverse shell, or arbitrary process launch. The implementation is not a production ingress or a sandbox for external commands.
 
+## Restart limits
+
+A clean shutdown removes the owner socket. After unclean termination, its pathname
+can remain. The fixture reuses the same journal, port, and host identity with a
+fresh private owner runtime directory. For manual lab recovery, first confirm the
+old daemon has stopped, then launch with the same state and identity and a fresh
+OWNER_DIRECTORY; direct owner CLI commands to that directory. Do not remove an
+active socket. The fixture does not validate service-manager recovery or power loss.
+
 ## Milestones and rollback
 
 1. M1 proves local opt-in approval, one task, recoverable transport loss, bounded replay, and revocation with negative tests. A release/build tag is not required for this lab. Roll back this lab by stopping the process and using the previous commit with a fresh disposable fixture.

@@ -29,6 +29,8 @@ if (path) {
     process.exitCode = 1;
   }
 } else if (!newId) {
-  console.error('Usage: node src/owner-cli.mjs OWNER_DIRECTORY new-id|health|approve FINGERPRINT TASK|start TASK|revoke FINGERPRINT');
+  console.error(
+    'Usage: node src/owner-cli.mjs OWNER_DIRECTORY new-id|health|approve FINGERPRINT TASK|start TASK|revoke FINGERPRINT',
+  );
   process.exitCode = 2;
 }

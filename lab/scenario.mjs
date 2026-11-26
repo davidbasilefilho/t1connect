@@ -1,19 +1,35 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { createProjection, deviceTransport, isRetryable, ownerRequest, viewer } from '../src/client.mjs';
+import {
+  createProjection,
+  deviceTransport,
+  isRetryable,
+  ownerRequest,
+  viewer,
+} from '../src/client.mjs';
 import { STEPS } from '../src/protocol.mjs';
 import { daemon, fixture, impairment } from './fixture.mjs';
 
+/** @param {{trials: number, keepAlive?: boolean, progress?: (message: string) => void}} options */
 export async function scenario({ trials, keepAlive = true, progress = () => {} }) {
   const f = fixture();
-  let host, link, device, reusedRequests = 0;
+  let host,
+    link,
+    device,
+    reusedRequests = 0;
   try {
     host = await daemon(f);
     link = await impairment(host.port);
     const hostPin = f.fp('host');
     const deviceId = f.fp('viewer');
-    device = deviceTransport({ port: link.port, tls: f.tls('viewer'), hostPin, timeoutMs: 85, keepAlive });
+    device = deviceTransport({
+      port: link.port,
+      tls: f.tls('viewer'),
+      hostPin,
+      timeoutMs: 85,
+      keepAlive,
+    });
     const counted = {
       async request(...args) {
         const response = await device.request(...args);
@@ -23,11 +39,13 @@ export async function scenario({ trials, keepAlive = true, progress = () => {} }
     };
     const owner = (method, path) => ownerRequest(host.ownerPath, method, path);
     const first = (await owner('GET', '/metrics')).data;
+    /** @type {Record<'pairing' | 'onlineEvent' | 'reconnection' | 'revocation', number[]>} */
     const timing = { pairing: [], onlineEvent: [], reconnection: [], revocation: [] };
     let events = 0;
     for (let index = 0; index < trials; index++) {
       const task = randomUUID();
       const readerPath = f.path('reader-' + index);
+      /** @type {ReturnType<typeof createProjection> | undefined} */
       let projection = createProjection(readerPath, hostPin, task);
       try {
         const eventPath = '/v1/tasks/' + task + '/events?after=0';
@@ -74,7 +92,10 @@ export async function scenario({ trials, keepAlive = true, progress = () => {} }
           recorded.push(...page);
           await sleep(15);
         }
-        assert.deepEqual(recorded.map(({ seq }) => seq), Array.from({ length: STEPS + 2 }, (_, i) => i + 1));
+        assert.deepEqual(
+          recorded.map(({ seq }) => seq),
+          Array.from({ length: STEPS + 2 }, (_, i) => i + 1),
+        );
         assert.equal(recorded.filter(({ kind }) => kind === 'started').length, 1);
         assert.equal(recorded.at(-1).kind, 'completed');
         assert.equal(projection.all().length, STEPS + 2);
@@ -98,8 +119,12 @@ export async function scenario({ trials, keepAlive = true, progress = () => {} }
     const last = (await owner('GET', '/metrics')).data;
     assert.equal(reusedRequests > 0, keepAlive, 'socket reuse must match the variant');
     return {
-      trials, events, timing, reusedRequests,
-      hostCpuMs: (last.userCPUTime + last.systemCPUTime - first.userCPUTime - first.systemCPUTime) / 1000,
+      trials,
+      events,
+      timing,
+      reusedRequests,
+      hostCpuMs:
+        (last.userCPUTime + last.systemCPUTime - first.userCPUTime - first.systemCPUTime) / 1000,
       hostPeakRssKiB: last.maxRSS,
       hostLastRssKiB: Math.round(last.rss / 1024),
     };

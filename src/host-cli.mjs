@@ -3,12 +3,19 @@ import { tlsFiles } from './protocol.mjs';
 
 const [state, ca, cert, key, port = '0', ownerDirectory = state, ...rest] = process.argv.slice(2);
 if (!state || !ca || !cert || !key || rest.length) {
-  console.error('Usage: node src/host-cli.mjs STATE CA.pem HOST.pem HOST.key [PORT [OWNER_DIRECTORY]]');
+  console.error(
+    'Usage: node src/host-cli.mjs STATE CA.pem HOST.pem HOST.key [PORT [OWNER_DIRECTORY]]',
+  );
   process.exitCode = 2;
 } else {
   process.umask(0o077);
   try {
-    const host = await startHost({ state, ownerDirectory, tls: tlsFiles(ca, cert, key), port: Number(port) });
+    const host = await startHost({
+      state,
+      ownerDirectory,
+      tls: tlsFiles(ca, cert, key),
+      port: Number(port),
+    });
     for (const signal of ['SIGTERM', 'SIGINT']) {
       process.once(signal, () => void host.close());
     }

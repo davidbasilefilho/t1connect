@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { createProjection, deviceTransport, isRetryable, ownerRequest, viewer } from '../src/client.mjs';
+import {
+  createProjection,
+  deviceTransport,
+  isRetryable,
+  ownerRequest,
+  viewer,
+} from '../src/client.mjs';
 import { STEPS } from '../src/protocol.mjs';
 import { daemon, fixture, waitUntil } from './fixture.mjs';
 
@@ -68,7 +74,10 @@ export async function restartScenario(mode) {
       return projection.cursor() === EVENT_COUNT;
     });
     const all = projection.all();
-    assert.deepEqual(all.map(({ seq }) => seq), Array.from({ length: EVENT_COUNT }, (_, i) => i + 1));
+    assert.deepEqual(
+      all.map(({ seq }) => seq),
+      Array.from({ length: EVENT_COUNT }, (_, i) => i + 1),
+    );
     assert.equal(all.filter(({ kind }) => kind === 'started').length, 1);
     assert.equal(all.filter(({ kind }) => kind === 'completed').length, 1);
 
@@ -79,8 +88,11 @@ export async function restartScenario(mode) {
     assert.equal((await client.request('POST', '/v1/session')).status, 403);
     assert.equal((await client.request('GET', eventPath, data.token)).status, 403);
     return {
-      mode, events: all.length, interruptionToReadyMs: ready - interrupted,
-      readyToResumeMs: resumed - ready, interruptionToResumeMs: resumed - interrupted,
+      mode,
+      events: all.length,
+      interruptionToReadyMs: ready - interrupted,
+      readyToResumeMs: resumed - ready,
+      interruptionToResumeMs: resumed - interrupted,
     };
   } finally {
     projection?.close();

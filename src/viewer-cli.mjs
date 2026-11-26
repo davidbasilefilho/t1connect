@@ -1,11 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
-import { createProjection, deviceTransport, isRetryable, viewer } from './client.mjs';
+import {
+  createProjection,
+  deviceTransport,
+  isRetryable,
+  ResponseError,
+  viewer,
+} from './client.mjs';
 import { fingerprint, STEPS, tlsFiles } from './protocol.mjs';
 
 const [state, port, ca, serverCert, cert, key, task, ...rest] = process.argv.slice(2);
 if (!task || rest.length) {
-  console.error('Usage: node src/viewer-cli.mjs STATE PORT CA.pem HOST.pem DEVICE.pem DEVICE.key TASK');
+  console.error(
+    'Usage: node src/viewer-cli.mjs STATE PORT CA.pem HOST.pem DEVICE.pem DEVICE.key TASK',
+  );
   process.exitCode = 2;
 } else {
   let transport, projection;
@@ -24,7 +32,8 @@ if (!task || rest.length) {
         events = await follower.poll();
       } catch (error) {
         if (!isRetryable(error)) throw error;
-        if (!disconnected) console.error('Connection interrupted. Retrying from the saved position.');
+        if (!disconnected)
+          console.error('Connection interrupted. Retrying from the saved position.');
         disconnected = true;
         await delay(150);
         continue;
@@ -35,7 +44,11 @@ if (!task || rest.length) {
       await delay(50);
     }
   } catch (error) {
-    console.error(error.status === 403 ? 'Access denied or revoked.' : 'Viewer could not continue.');
+    console.error(
+      error instanceof ResponseError && error.status === 403
+        ? 'Access denied or revoked.'
+        : 'Viewer could not continue.',
+    );
     process.exitCode = 1;
   } finally {
     projection?.close();

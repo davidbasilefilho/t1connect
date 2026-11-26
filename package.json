@@ -4,11 +4,26 @@
   "version": "0.1.0",
   "type": "module",
   "license": "Apache-2.0",
-  "engines": { "node": ">=24.15.0 <25" },
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "demo": "node lab/demo.mjs",
     "bench": "node lab/benchmark.mjs",
-    "bench:restart": "node lab/benchmark-restart.mjs"
+    "bench:restart": "node lab/benchmark-restart.mjs",
+    "lint": "oxlint --type-aware --deny-warnings src lab test",
+    "fmt": "oxfmt src lab test",
+    "fmt:check": "oxfmt --check src lab test",
+    "typecheck": "tsc --project tsconfig.json",
+    "check": "npm run lint && npm run fmt:check && npm run typecheck",
+    "verify": "npm run check && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.4",
+    "oxfmt": "0.80.0",
+    "oxlint": "1.95.0",
+    "oxlint-tsgolint": "7.0.2009",
+    "typescript": "5.9.3"
   }
 }
