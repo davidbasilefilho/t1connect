@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { chmodSync, statSync } from 'node:fs';
+import { chmodSync, mkdirSync, statSync } from 'node:fs';
 import test from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import {
@@ -227,4 +227,23 @@ void test('separate owner runtime directory preserves state and does not expose 
   const client = deviceTransport({ port: host.port, tls: f.tls('viewer'), hostPin: f.fp('host') });
   t.after(() => client.close());
   assert.equal((await client.request('GET', '/health')).status, 403);
+});
+
+void test('a host with unavailable journal storage does not advertise readiness', async (t) => {
+  const f = fixture();
+  t.after(() => f.close());
+  mkdirSync(f.path('blocked-state/host.sqlite'), { recursive: true, mode: 0o700 });
+  const child = await command(
+    'src/host-cli.mjs',
+    f.path('blocked-state'),
+    f.path('ca.pem'),
+    f.path('host.pem'),
+    f.path('host.key'),
+  );
+  t.after(() => child.stop());
+  const exit = await child.done();
+  assert.equal(exit.code, 1);
+  assert.equal(exit.output, '');
+  assert.match(exit.errors, /^Host did not start\./);
+  assert.throws(() => statSync(f.path('blocked-state/owner.sock')), { code: 'ENOENT' });
 });
