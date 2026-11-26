@@ -3,6 +3,7 @@ use crate::{
     protocol::{Inbound, parse_request, read_request, reply},
     store::{Start, Store, wall_ms},
 };
+use rustix::event::{PollFd, PollFlags, Timespec, poll};
 use std::{
     fs::{self, DirBuilder, File, OpenOptions},
     io,
@@ -15,7 +16,6 @@ use std::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    thread,
     time::{Duration, Instant},
 };
 
@@ -60,6 +60,22 @@ fn lock(path: &Path) -> Result<File> {
     file.try_lock()
         .map_err(|_| Error::Boundary("another daemon owns this state or runtime directory"))?;
     Ok(file)
+}
+
+const JOURNAL_INTERVAL: Duration = Duration::from_millis(15);
+
+fn wait_for_owner(listener: &UnixListener, last_tick: Instant) -> Result<()> {
+    let duration = JOURNAL_INTERVAL.saturating_sub(last_tick.elapsed());
+    let nanos = i64::try_from(duration.as_nanos()).map_err(|_| Error::Clock)?;
+    let timeout = Timespec {
+        tv_sec: 0,
+        tv_nsec: nanos,
+    };
+    let mut fds = [PollFd::new(listener, PollFlags::IN)];
+    match poll(&mut fds, Some(&timeout)) {
+        Ok(_) | Err(rustix::io::Errno::INTR) => Ok(()),
+        Err(error) => Err(Error::Io("wait for owner socket", error.into())),
+    }
 }
 
 struct OwnedSocket(PathBuf);
@@ -114,14 +130,14 @@ pub fn serve(state: &Path, runtime: &Path) -> Result<()> {
 
     let mut last_tick = Instant::now();
     while !stop.load(Ordering::Relaxed) {
-        if last_tick.elapsed() >= Duration::from_millis(15) {
+        if last_tick.elapsed() >= JOURNAL_INTERVAL {
             store.tick(wall_ms()?)?;
             last_tick = Instant::now();
         }
         match listener.accept() {
             Ok((mut stream, _)) => handle(&mut stream, &mut store)?,
             Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
-                thread::sleep(Duration::from_millis(2))
+                wait_for_owner(&listener, last_tick)?
             }
             Err(error) if error.kind() == io::ErrorKind::Interrupted => (),
             Err(error) => return Err(Error::Io("accept owner request", error)),

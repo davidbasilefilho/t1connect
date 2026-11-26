@@ -78,3 +78,43 @@ sequence conversion; this is not an absolute claim about dependencies or OOM.
    least 0.5 ms in per-run owner health p95, median CPU no more than one tick
    above baseline, peak RSS no more than 8 MiB above baseline, and all contract
    checks passing. Report ranges, not a confidence interval from six runs.
+
+## Observed results
+
+Node v24.22.3, Linux x86-64. mise 2026.11.14 resolved Rust 1.100.0
+(0ef1bc386, 2026-11-09); rust-analyzer reported the same toolchain version.
+The two unit tests and the standalone differential fixture passed. The fixture
+does not implement approvals/revocation in Rust; the unchanged JS suite is the
+reference for that boundary. These numbers cannot validate T3 Code parity,
+TLS turn latency, a mobile device or a VM.
+
+The [initial JS/Rust measurement](evidence/rust-owner-js-sleep.ndjson) retained
+all 136 events per variant per run. The Rust sleep implementation had higher
+owner p95 (2.89–5.71 ms) than JS (0.59–1.22 ms) despite less boot and resident
+work in its deliberately smaller implementation. That observation motivated
+the single wait experiment, not a wholesale runtime speed claim.
+
+The [paired Rust wait comparison](evidence/rust-owner-poll.ndjson) kept the
+deadline, SQLite and CLI unchanged. CPU accounting updates in 10 ms ticks.
+
+| Measure, six runs per variant | Fixed 2 ms sleep | Bounded fd wait |
+| --- | ---: | ---: |
+| Median of per-run owner p95 | 2.88 ms | 0.50 ms |
+| Per-run p95 range | 2.77–3.30 ms | 0.36–1.88 ms |
+| Median process CPU after readiness | 30 ms | 20 ms |
+| CPU range | 20–40 ms | 10–30 ms |
+| Maximum observed peak RSS | 3,428 KiB | 3,348 KiB |
+| Cold readiness range | 5.97–12.21 ms | 10.01–13.27 ms |
+
+Keep the fd wait. The p95 change exceeds the 0.5 ms gate in the sampled
+environment; CPU ticks and RSS stay inside the gates. Cold readiness ranges
+overlap and the change does not claim faster startup or a precise CPU saving.
+All 816 ordered events per variant were recorded without duplicate starts.
+Use the fixed-sleep binary from commit 81e7464 to reproduce the comparison
+with T1_RUST_BASELINE_BIN; reverting only the wait commit returns to that
+behavior. No threads or parallel tasks were added.
+
+Next, add synthetic device-approval/mTLS fixtures and compare the Rust host
+with JS at that expanded boundary. Maintain denial by default. Do not expose
+a Rust viewer API until certificate binding, short sessions, per-task scope,
+revocation on an existing connection and revocation across restart pass.

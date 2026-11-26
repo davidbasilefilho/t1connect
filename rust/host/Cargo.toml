@@ -8,7 +8,7 @@ license.workspace = true
 [dependencies]
 httparse = "1.10"
 rusqlite = { version = "0.43", features = ["bundled"] }
-rustix = { version = "1", features = ["process"] }
+rustix = { version = "1", features = ["event", "process"] }
 signal-hook = "0.3"
 
 [lints]

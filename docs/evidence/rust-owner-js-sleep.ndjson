@@ -1,0 +1,9 @@
+{"fixture":"owner-contract-v1","node":"v24.22.3","runs":4,"hz":100,"platform":"linux/x64"}
+{"pair":1,"variant":"js","readyMs":89.966,"health":{"p50":0.445,"p95":1.221},"cpuMs":80,"peakRssKiB":44872,"events":136}
+{"pair":1,"variant":"rust","readyMs":13.257,"health":{"p50":2.112,"p95":3.175},"cpuMs":40,"peakRssKiB":3308,"events":136}
+{"pair":2,"variant":"rust","readyMs":12.815,"health":{"p50":2.098,"p95":2.999},"cpuMs":40,"peakRssKiB":3304,"events":136}
+{"pair":2,"variant":"js","readyMs":94.012,"health":{"p50":0.353,"p95":0.609},"cpuMs":60,"peakRssKiB":44760,"events":136}
+{"pair":3,"variant":"js","readyMs":121.715,"health":{"p50":0.332,"p95":0.588},"cpuMs":50,"peakRssKiB":45368,"events":136}
+{"pair":3,"variant":"rust","readyMs":6.241,"health":{"p50":2.1,"p95":2.888},"cpuMs":30,"peakRssKiB":3328,"events":136}
+{"pair":4,"variant":"rust","readyMs":11.424,"health":{"p50":2.114,"p95":5.711},"cpuMs":40,"peakRssKiB":3404,"events":136}
+{"pair":4,"variant":"js","readyMs":95.636,"health":{"p50":0.417,"p95":1.008},"cpuMs":40,"peakRssKiB":45420,"events":136}
