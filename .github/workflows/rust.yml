@@ -1,0 +1,47 @@
+name: Rust private host
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Rust host and JS contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Install pinned mise
+        shell: bash
+        run: |
+          mise_dir="$RUNNER_TEMP/t1-mise"
+          mkdir -p "$mise_dir"
+          curl --proto '=https' -fsSL https://github.com/jdx/mise/releases/download/v2026.11.14/mise-v2026.11.14-linux-x64.tar.gz -o "$mise_dir/mise.tar.gz"
+          printf '%s  %s\n' 42a3ff51c24b4315d679a07bbc598e299dda12fea0dfc0d6f90a543495834831 "$mise_dir/mise.tar.gz" | sha256sum -c
+          tar -xzf "$mise_dir/mise.tar.gz" -C "$mise_dir" mise/bin/mise
+          printf '%s\n' "$mise_dir/mise/bin" >> "$GITHUB_PATH"
+      - name: Resolve stable and record tools
+        run: |
+          mise trust
+          mise install
+          mise exec -- rustc -Vv
+          mise exec -- cargo -V
+          mise exec -- rustfmt --version
+          mise exec -- cargo clippy --version
+          mise exec -- rust-analyzer --version
+      - name: Verify locked workspace and differential contract
+        run: mise run rust:verify
+      - name: Confirm tracked source was not mutated
+        run: git diff --exit-code

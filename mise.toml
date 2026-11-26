@@ -1,0 +1,18 @@
+[tools]
+rust = { version = "stable", profile = "minimal", components = ["rustfmt", "clippy", "rust-analyzer", "rust-src"] }
+
+[tasks."rust:check"]
+description = "Check Rust formatting and lint the complete workspace"
+run = [
+  "cargo fmt --all -- --check",
+  "cargo clippy --locked --workspace --all-targets -- -D warnings",
+]
+
+[tasks."rust:verify"]
+description = "Verify Rust, then run the local JS/Rust contract"
+depends = ["rust:check"]
+run = [
+  "cargo test --locked --workspace",
+  "cargo build --locked --release --workspace",
+  "node lab/rust-owner-contract.mjs",
+]
