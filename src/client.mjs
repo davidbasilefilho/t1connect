@@ -1,5 +1,5 @@
 import { request as http } from 'node:http';
-import { request as https } from 'node:https';
+import { Agent, request as https } from 'node:https';
 import { checkServerIdentity } from 'node:tls';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
@@ -28,7 +28,7 @@ function jsonRequest(send, options, timeoutMs) {
       });
       res.on('end', () => {
         try {
-          resolve({ status: res.statusCode, data: JSON.parse(data) });
+          resolve({ status: res.statusCode, data: JSON.parse(data), reusedSocket: req.reusedSocket });
         } catch {
           reject(new Error('invalid response'));
         }
@@ -41,21 +41,27 @@ function jsonRequest(send, options, timeoutMs) {
 export const ownerRequest = (socketPath, method, path) =>
   jsonRequest(http, { socketPath, method, path, agent: false }, 2_000);
 
-export function deviceTransport({ port, tls, hostPin, timeoutMs = 1_000 }) {
+export function deviceTransport({ port, tls, hostPin, timeoutMs = 1_000, keepAlive = true }) {
   if (!Number.isInteger(port) || port < 1 || port > 65535 || !isFingerprint(hostPin)) {
     throw new Error('valid loopback port and server certificate fingerprint required');
   }
+  // The HTTPS agent is private to this endpoint, mutual TLS identity and immutable pin.
+  // A per-request override in recent Node versions deliberately prevents socket reuse.
+  const pinnedIdentity = (server, cert) => checkServerIdentity(server, cert) ??
+    (fingerprint(cert.raw) === hostPin ? undefined : new Error('server certificate pin mismatch'));
+  const agent = keepAlive ? new Agent({
+    keepAlive: true, agentKeepAliveTimeoutBuffer: 250,
+    maxSockets: 1, maxFreeSockets: 1, maxCachedSessions: 0,
+    checkServerIdentity: pinnedIdentity,
+  }) : false;
   const request = (method, path, token) => jsonRequest(https, {
     ...tls, host: LOOPBACK, servername: 'localhost', port,
-    minVersion: 'TLSv1.3', rejectUnauthorized: true, agent: false,
-    checkServerIdentity(server, cert) {
-      return checkServerIdentity(server, cert) ??
-        (fingerprint(cert.raw) === hostPin ? undefined : new Error('server certificate pin mismatch'));
-    },
+    minVersion: 'TLSv1.3', rejectUnauthorized: true, agent,
+    ...(agent ? {} : { checkServerIdentity: pinnedIdentity }),
     method, path,
     headers: token ? { Authorization: 'Bearer ' + token } : {},
   }, timeoutMs);
-  return { request, close() {} };
+  return { request, close() { if (agent) agent.destroy(); } };
 }
 
 export function createProjection(state, hostPin, task) {

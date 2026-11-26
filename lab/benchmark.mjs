@@ -2,9 +2,9 @@ import { scenario } from './scenario.mjs';
 
 const [mode = 'baseline', runCount = '3', trialCount = '4', ...extra] = process.argv.slice(2);
 const reps = Number(runCount), trials = Number(trialCount);
-if (mode !== 'baseline' || !Number.isInteger(reps) || reps < 1 || reps > 12 ||
+if (!['baseline', 'candidate', 'compare'].includes(mode) || !Number.isInteger(reps) || reps < 1 || reps > 12 ||
     !Number.isInteger(trials) || trials < 1 || trials > 12 || extra.length) {
-  throw new Error('Usage: npm run bench -- baseline [RUNS 1-12] [TRIALS 1-12]');
+  throw new Error('Usage: npm run bench -- baseline|candidate|compare [RUNS 1-12] [TRIALS 1-12]');
 }
 const rounded = (n) => Math.round(n * 100) / 100;
 const percentile = (samples, quantile) => {
@@ -17,13 +17,18 @@ console.log(JSON.stringify({
   mode, runs: reps, trialsPerRun: trials, sampleUnits: 'ms, peak RSS in KiB',
 }));
 for (let run = 1; run <= reps; run++) {
-  const result = await scenario({ trials });
-  console.log(JSON.stringify({
-    run, pairingSucceeded: result.trials, expectedTrials: trials, eventCount: result.events,
-    reconnectionsSucceeded: trials, revokedDevicesDenied: 1,
-    pairing: summarize(result.timing.pairing), onlineEvent: summarize(result.timing.onlineEvent),
-    reconnection: summarize(result.timing.reconnection), revocation: summarize(result.timing.revocation),
-    hostCpuMs: rounded(result.hostCpuMs), hostPeakRssKiB: result.hostPeakRssKiB,
-    hostLastRssKiB: result.hostLastRssKiB,
-  }));
+  const variants = mode === 'compare'
+    ? (run % 2 ? ['baseline', 'candidate'] : ['candidate', 'baseline'])
+    : [mode];
+  for (const variant of variants) {
+    const result = await scenario({ trials, keepAlive: variant === 'candidate' });
+    console.log(JSON.stringify({
+      run, variant, pairingSucceeded: result.trials, expectedTrials: trials, eventCount: result.events,
+      reconnectionsSucceeded: trials, revokedDevicesDenied: 1, reusedRequests: result.reusedRequests,
+      pairing: summarize(result.timing.pairing), onlineEvent: summarize(result.timing.onlineEvent),
+      reconnection: summarize(result.timing.reconnection), revocation: summarize(result.timing.revocation),
+      hostCpuMs: rounded(result.hostCpuMs), hostPeakRssKiB: result.hostPeakRssKiB,
+      hostLastRssKiB: result.hostLastRssKiB,
+    }));
+  }
 }

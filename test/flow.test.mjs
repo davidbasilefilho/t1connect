@@ -27,6 +27,11 @@ test('approval and task scope, TLS pin, expiry, binding, revocation, and durable
   const issue = (transport) => transport.request('POST', '/v1/session');
   assert.equal((await issue(a)).status, 403);
   await assert.rejects(() => issue(use('viewer', f.fp('second'))), /pin mismatch/);
+  const wrongPin = deviceTransport({
+    port: host.port, tls: f.tls('viewer'), hostPin: f.fp('second'), keepAlive: true,
+  });
+  t.after(() => wrongPin.close());
+  await assert.rejects(() => issue(wrongPin), /pin mismatch/);
   await assert.rejects(() => issue(use('untrusted')));
   await assert.rejects(() => issue(use('viewer', f.fp('host'), { ca: f.tls('viewer').ca })));
 
@@ -57,7 +62,10 @@ test('approval and task scope, TLS pin, expiry, binding, revocation, and durable
     assert.ok(p.cursor() > 0);
     await host.close();
     host = await startHost({ state: f.path('host'), tls: f.tls('host') });
-    const reopened = use('viewer');
+    const reopened = deviceTransport({
+      port: host.port, tls: f.tls('viewer'), hostPin: f.fp('host'), keepAlive: true,
+    });
+    t.after(() => reopened.close());
     const following = viewer({ transport: reopened, projection: p, task });
     await waitUntil(async () => {
       await following.poll();
@@ -71,7 +79,9 @@ test('approval and task scope, TLS pin, expiry, binding, revocation, and durable
     const activeToken = (await issue(reopened)).data.token;
     assert.equal((await reopened.request('GET', eventsPath(task), activeToken)).status, 200);
     assert.equal((await ownerRequest(host.ownerPath, 'POST', '/revoke/' + f.fp('viewer'))).status, 200);
-    assert.equal((await reopened.request('GET', eventsPath(task), activeToken)).status, 403);
+    const revokedRead = await reopened.request('GET', eventsPath(task), activeToken);
+    assert.equal(revokedRead.status, 403);
+    assert.equal(revokedRead.reusedSocket, true);
     assert.equal((await issue(reopened)).status, 403);
     assert.equal((await approve(host, f, 'viewer', task)).status, 409);
     await host.close();

@@ -14,10 +14,15 @@ There are no npm dependencies. OpenSSL is used only by the synthetic fixture.
 ```sh
 npm test
 npm run demo
-npm run bench -- baseline 3 4
+npm run bench -- compare 3 4
 ```
 
 The lab starts a child daemon on a random loopback port, creates temporary test
 identities, and removes them on exit. It cannot listen on LAN or public addresses.
 The desktop-owner and viewer CLIs are exercised as separate processes in the test
 suite. There is no installation, agent execution, user data, or external relay.
+
+Read the [recorded benchmark](docs/benchmark.md) and the optional
+[T1OS companion profile](integrations/t1os/README.md). The latter has not been
+executed in a guest. No normal device onboarding, production trust enrollment,
+browser/mobile client, discovery, or off-host access is implemented here.
