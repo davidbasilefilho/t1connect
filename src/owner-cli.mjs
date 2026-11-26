@@ -3,11 +3,12 @@ import { join } from 'node:path';
 import { ownerRequest } from './client.mjs';
 import { isFingerprint, isId, privateDirectory } from './protocol.mjs';
 
-const [state, command, a, b, ...more] = process.argv.slice(2);
+const [directory, command, a, b, ...more] = process.argv.slice(2);
 let method = 'POST';
 let path;
-if (!more.length && state) {
-  if (command === 'new-id' && a === undefined) console.log(randomUUID());
+const newId = directory && command === 'new-id' && a === undefined;
+if (newId) console.log(randomUUID());
+if (!more.length && directory) {
   if (command === 'health' && a === undefined) [method, path] = ['GET', '/health'];
   if (command === 'approve' && isFingerprint(a) && isId(b)) path = '/approve/' + a + '/' + b;
   if (command === 'revoke' && isFingerprint(a) && b === undefined) path = '/revoke/' + a;
@@ -15,8 +16,8 @@ if (!more.length && state) {
 }
 if (path) {
   try {
-    privateDirectory(state);
-    const { status, data } = await ownerRequest(join(state, 'owner.sock'), method, path);
+    privateDirectory(directory);
+    const { status, data } = await ownerRequest(join(directory, 'owner.sock'), method, path);
     if (status !== 200) {
       console.error('Owner request was rejected (HTTP ' + status + ').');
       process.exitCode = 1;
@@ -27,7 +28,7 @@ if (path) {
     console.error('Owner socket unavailable.');
     process.exitCode = 1;
   }
-} else if (command !== 'new-id' || a !== undefined || !state) {
-  console.error('Usage: node src/owner-cli.mjs STATE new-id|health|approve FINGERPRINT TASK|start TASK|revoke FINGERPRINT');
+} else if (!newId) {
+  console.error('Usage: node src/owner-cli.mjs OWNER_DIRECTORY new-id|health|approve FINGERPRINT TASK|start TASK|revoke FINGERPRINT');
   process.exitCode = 2;
 }

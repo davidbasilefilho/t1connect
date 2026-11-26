@@ -57,13 +57,15 @@ function permittedShape(req) {
 }
 
 export async function startHost({
-  state, tls, port = 0, now = Date.now, monotonic = () => performance.now(),
+  state, ownerDirectory = state, tls, port = 0,
+  now = Date.now, monotonic = () => performance.now(),
 }) {
   if (!Number.isInteger(port) || port < 0 || port > 65535 || process.getuid() === 0) {
     throw new Error('run unprivileged and use a valid loopback port');
   }
   privateDirectory(state);
-  const ownerPath = join(state, 'owner.sock');
+  if (ownerDirectory !== state) privateDirectory(ownerDirectory);
+  const ownerPath = join(ownerDirectory, 'owner.sock');
   const store = hostStore(join(state, 'host.sqlite'));
   const tokens = new Map();
 
@@ -109,7 +111,8 @@ export async function startHost({
     minVersion: 'TLSv1.3', handshakeTimeout: 2000,
   }, handle((req, res) => {
     const peer = req.socket.getPeerCertificate();
-    if (!req.socket.authorized || !peer.raw || Date.parse(peer.valid_to) <= now()) {
+    const expiresAt = Date.parse(peer.valid_to);
+    if (!req.socket.authorized || !peer.raw || !Number.isFinite(expiresAt) || expiresAt <= now()) {
       return error(res, 401, 'invalid-device');
     }
     const id = fingerprint(peer.raw);

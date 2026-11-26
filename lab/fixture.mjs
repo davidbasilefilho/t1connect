@@ -92,16 +92,16 @@ export async function waitUntil(predicate, duration = 5_000) {
   throw new Error('Timed out waiting for the lab condition.');
 }
 
-export async function daemon(f, port = 0) {
+export async function daemon(f, port = 0, ownerDirectory = f.path('host-state')) {
   const process = await command('src/host-cli.mjs', f.path('host-state'), f.path('ca.pem'),
-    f.path('host.pem'), f.path('host.key'), String(port));
+    f.path('host.pem'), f.path('host.key'), String(port), ownerDirectory);
   try {
     const address = await waitUntil(() => {
       if (process.child.exitCode !== null) throw new Error('Disposable host exited before readiness.');
       if (!process.stdout().includes('\n')) return;
       return JSON.parse(process.stdout().trim());
     });
-    return { ...process, port: address.port, ownerPath: f.path('host-state/owner.sock') };
+    return { ...process, port: address.port, ownerPath: join(ownerDirectory, 'owner.sock') };
   } catch (error) {
     await process.stop();
     throw error;

@@ -156,3 +156,21 @@ test('down transport is identified separately from authentication rejection', as
   proxy.loss();
   await assert.rejects(() => client.request('POST', '/v1/session'), isRetryable);
 });
+
+test('separate owner runtime directory preserves state and does not expose owner routes to TLS', async (t) => {
+  const f = fixture();
+  t.after(() => f.close());
+  const path = f.path('runtime');
+  const host = await daemon(f, 0, path);
+  t.after(() => host.stop());
+  const ready = await (await command('src/owner-cli.mjs', path, 'health')).done();
+  assert.equal(ready.code, 0);
+  assert.equal(ready.output.trim(), 'ready');
+  const wrong = await (await command('src/owner-cli.mjs', f.path('host-state'), 'health')).done();
+  assert.equal(wrong.code, 1);
+  assert.equal(statSync(path).mode & 0o777, 0o700);
+  assert.equal(statSync(f.path('host-state/host.sqlite')).isFile(), true);
+  const client = deviceTransport({ port: host.port, tls: f.tls('viewer'), hostPin: f.fp('host') });
+  t.after(() => client.close());
+  assert.equal((await client.request('GET', '/health')).status, 403);
+});

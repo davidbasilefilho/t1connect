@@ -1,0 +1,42 @@
+[Unit]
+Description=T1 Connect private lab companion (loopback only)
+ConditionPathExists=/etc/t1-connect/enable-lab
+ConditionFileIsExecutable=/opt/t1-connect/node/bin/node
+ConditionPathExists=/opt/t1-connect/app/src/host-cli.mjs
+
+[Service]
+Type=exec
+User=t1-connect
+Group=t1-connect
+StateDirectory=t1-connect
+StateDirectoryMode=0700
+RuntimeDirectory=t1-connect
+RuntimeDirectoryMode=0700
+UMask=0077
+LoadCredential=ca.pem:/etc/t1-connect/pki/ca.pem
+LoadCredential=host.pem:/etc/t1-connect/pki/host.pem
+LoadCredential=host.key:/etc/t1-connect/pki/host.key
+ExecStart=/usr/bin/env -- /opt/t1-connect/node/bin/node /opt/t1-connect/app/src/host-cli.mjs %S/t1-connect %d/ca.pem %d/host.pem %d/host.key 3791 %t/t1-connect
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+InaccessiblePaths=-/opt/t1os
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+TasksMax=32
+MemoryMax=192M
+TimeoutStopSec=5s
