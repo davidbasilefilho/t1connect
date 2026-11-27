@@ -31,3 +31,6 @@ Read the [recorded benchmark](docs/benchmark.md) and the optional
 [T1OS companion profile](integrations/t1os/README.md). The latter has not been
 executed in a guest. No normal device onboarding, production trust enrollment,
 browser/mobile client, discovery, or off-host access is implemented here.
+
+The separate [Rust local host increment](docs/rust-local-host.md) covers only the
+owner Unix socket and synthetic journal. The JavaScript lab remains the reference.

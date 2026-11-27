@@ -5,13 +5,13 @@ hooks {
     fix = false
     stage = false
     steps {
-      ["check"] { check = "npm run check" }
+      ["check"] { check = "npm run check && mise run rust:check" }
     }
   }
   ["pre-push"] {
     fix = false
     steps {
-      ["verify"] { check = "npm run verify" }
+      ["verify"] { check = "npm run verify && mise run rust:verify" }
     }
   }
 }

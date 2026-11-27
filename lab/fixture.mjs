@@ -113,7 +113,11 @@ export function fixture() {
 }
 
 export async function command(path, ...args) {
-  const child = spawn(process.execPath, [path, ...args], {
+  return localProcess(process.execPath, [path, ...args]);
+}
+
+export function localProcess(executable, args) {
+  const child = spawn(executable, args, {
     cwd: root,
     env: {},
     stdio: ['ignore', 'pipe', 'pipe'],
